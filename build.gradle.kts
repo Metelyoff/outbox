@@ -22,8 +22,7 @@ repositories {
 extra["springCloudVersion"] = "2024.0.0"
 
 dependencies {
-//    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.2"))
-    implementation("org.springframework.boot:spring-boot-dependencies:3.4.2")
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.2"))
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-aop")
