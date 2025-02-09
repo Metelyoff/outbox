@@ -9,12 +9,6 @@ group = "com.ecommerce.outbox"
 version = "1.0.0"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
 repositories {
     mavenCentral()
 }
