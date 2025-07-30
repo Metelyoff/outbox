@@ -1,3 +1,4 @@
+# https://jitpack.io/#Metelyoff/outbox
 jdk:
   - openjdk17
 before_install:
