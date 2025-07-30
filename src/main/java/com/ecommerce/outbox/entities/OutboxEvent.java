@@ -1,42 +1,41 @@
 package com.ecommerce.outbox.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Entity
 @Table(
         name = "outbox_events",
         indexes = {
                 @Index(name = "idx_context_id", columnList = "context_id"),
+                @Index(name = "idx_event_name", columnList = "event_name"),
+                @Index(name = "idx_process_name", columnList = "process_name"),
                 @Index(name = "idx_status", columnList = "status"),
-                @Index(name = "idx_context_id_status", columnList = "context_id, status"),
-                @Index(name = "idx_context_id_event_name", columnList = "context_id, event_name"),
-                @Index(name = "idx_version", columnList = "version")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uq_context_id_event_name", columnNames = {"context_id", "event_name"})
         }
 )
 public class OutboxEvent {
 
+    public static final int MAX_TEXT_LENGTH = 255;
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Size(max = 255)
+    @Length(min = 1, max = MAX_TEXT_LENGTH)
     @Column(name = "context_id", nullable = false)
     private String contextId;
 
-    @Size(max = 255)
+    @Length(min = 1, max = MAX_TEXT_LENGTH)
     @Column(name = "process_name", nullable = false)
     private String processName;
 
-    @Size(max = 255)
+    @Length(min = 1, max = MAX_TEXT_LENGTH)
     @Column(name = "event_name", nullable = false)
     private String eventName;
 
@@ -47,7 +46,7 @@ public class OutboxEvent {
     @Column(name = "status", nullable = false)
     private OutboxEventStatus status;
 
-    @Size(max = 255)
+    @Length(max = MAX_TEXT_LENGTH)
     @Column(name = "status_message")
     private String statusMessage;
 
@@ -72,6 +71,7 @@ public class OutboxEvent {
             String statusMessage,
             long processedTimestamp
     ) {
+        this.id = UUID.nameUUIDFromBytes(String.format("%s-%s-%s", contextId, processName, status).getBytes(UTF_8));
         this.contextId = contextId;
         this.eventName = eventName;
         this.processName = processName;

@@ -1,6 +1,6 @@
 package com.ecommerce.outbox.annotations;
 
-import com.ecommerce.outbox.transformers.OutboxTransactionPayloadTransformer;
+import com.ecommerce.outbox.transformers.OutboxPayloadToStringTransformer;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.annotation.ElementType;
@@ -13,12 +13,12 @@ import java.lang.annotation.Target;
 @Transactional
 public @interface OutboxTransaction {
 
-    String name() default "";
+    boolean publishError() default true;
 
     String successEvent() default "";
 
     String rollbackEvent() default "";
 
-    Class<? extends OutboxTransactionPayloadTransformer> payloadTransformer() default OutboxTransactionPayloadTransformer.class;
+    Class<? extends OutboxPayloadToStringTransformer> payloadTransformer() default OutboxPayloadToStringTransformer.class;
 
 }

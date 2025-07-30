@@ -4,7 +4,7 @@ import com.ecommerce.outbox.annotations.OutboxTransaction;
 import com.ecommerce.outbox.entities.OutboxEventStatus;
 import com.ecommerce.outbox.entities.OutboxEvent;
 import com.ecommerce.outbox.exceptions.OutboxTransactionException;
-import com.ecommerce.outbox.transformers.OutboxTransactionPayloadTransformer;
+import com.ecommerce.outbox.transformers.OutboxPayloadToStringTransformer;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceContextType;
@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.ecommerce.outbox.entities.OutboxEvent.MAX_TEXT_LENGTH;
+
 @Aspect
 @Component
 public class OutboxTransactionAspect {
@@ -32,13 +34,12 @@ public class OutboxTransactionAspect {
 
     private static final Logger LOG = LoggerFactory.getLogger(OutboxTransactionAspect.class);
 
-    private static final Class<?> DEFAULT_TRANSFORMER_CLASS = OutboxTransactionPayloadTransformer.class;
+    private static final Class<?> DEFAULT_TRANSFORMER_CLASS = OutboxPayloadToStringTransformer.class;
 
     private static final String CONTEXT_ID_NOT_SPECIFIED_MESSAGE =
             "Please provide OutboxContext ID for returning value or pass it to the method as the first parameter.";
 
     private static final String EVENT_NAME_FORMAT = "%s.%s";
-    private static final int MAX_TEXT_LENGTH = 255;
 
     public OutboxTransactionAspect(
             ApplicationContext applicationContext,
@@ -47,7 +48,6 @@ public class OutboxTransactionAspect {
         this.applicationContext = applicationContext;
         this.eventPublisher = eventPublisher;
     }
-
 
     /**
      * Manages and processes transactions annotated with {@link OutboxTransaction}.
@@ -75,12 +75,11 @@ public class OutboxTransactionAspect {
             OutboxTransaction outboxTransaction
     ) throws Throwable {
         long startTime = System.currentTimeMillis();
-        Object transactionResult;
         String parameterOutboxContextId = extractContextIdFromArguments(joinPoint);
         String transactionProcessName = generateEventName(outboxTransaction, joinPoint, Optional.empty());
 
         try {
-            transactionResult = joinPoint.proceed();
+            Object transactionResult = joinPoint.proceed();
             String contextId = Optional.ofNullable(transactionResult)
                     .filter(OutboxContext.class::isInstance)
                     .map(OutboxContext.class::cast)
@@ -103,19 +102,21 @@ public class OutboxTransactionAspect {
             );
 
             entityManager.persist(event);
-            publishEvent(event);
             return transactionResult;
         } catch (Throwable ex) {
             LOG.error("Outbox transaction failed with cause: ", ex);
-            publishEvent(createOutboxEvent(
-                    parameterOutboxContextId,
-                    transactionProcessName,
-                    null,
-                    generateEventName(outboxTransaction, joinPoint, Optional.of(false)),
-                    OutboxEventStatus.FAILED,
-                    startTime,
-                    ex.getMessage()
-            ));
+            LOG.debug("Should persist rollback: {}", outboxTransaction.publishError());
+            if (outboxTransaction.publishError()) {
+                eventPublisher.publishEvent(createOutboxEvent(
+                        parameterOutboxContextId,
+                        transactionProcessName,
+                        null,
+                        generateEventName(outboxTransaction, joinPoint, Optional.of(false)),
+                        OutboxEventStatus.FAILED,
+                        startTime,
+                        ex.getMessage()
+                ));
+            }
             throw ex;
         } finally {
             logExecutionTime(joinPoint, startTime);
@@ -135,7 +136,8 @@ public class OutboxTransactionAspect {
 
     private String applyTransformation(OutboxTransaction transaction, Object entity) {
         if (transaction.payloadTransformer().equals(DEFAULT_TRANSFORMER_CLASS)) {
-            LOG.info("Will be applied default object.toString() method. Please implement the OutboxDTransactionPayloadTransformer interface.");
+            LOG.info("Will be applied default object.toString() method. " +
+                    "Please implement the OutboxDTransactionPayloadTransformer interface.");
             return Optional.ofNullable(entity).map(Object::toString).orElse(null);
         }
         return applicationContext.getBean(transaction.payloadTransformer()).transform(entity);
@@ -165,16 +167,16 @@ public class OutboxTransactionAspect {
         );
     }
 
-    private void publishEvent(OutboxEvent event) {
-        eventPublisher.publishEvent(event);
-    }
-
     private void logExecutionTime(JoinPoint joinPoint, long startTime) {
         long endTime = System.currentTimeMillis();
         LOG.debug("Method {} took: {}ms", joinPoint.getSignature(), endTime - startTime);
     }
 
-    private String generateEventName(OutboxTransaction transaction, JoinPoint joinPoint, Optional<Boolean> isSuccess) {
+    private String generateEventName(
+            OutboxTransaction transaction,
+            JoinPoint joinPoint,
+            Optional<Boolean> isSuccess
+    ) {
         return isSuccess.map(v -> v ? transaction.successEvent() : transaction.rollbackEvent())
                 .map(String::trim)
                 .filter(name -> !name.isBlank())
@@ -185,7 +187,7 @@ public class OutboxTransactionAspect {
     }
 
     private String truncateToMaxLength(String text) {
-        return (text != null && text.length() > MAX_TEXT_LENGTH)
+        return (text != null && text.length() >= MAX_TEXT_LENGTH)
                 ? text.substring(0, MAX_TEXT_LENGTH)
                 : text;
     }
