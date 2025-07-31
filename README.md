@@ -1,0 +1,1 @@
+[![](https://jitci.com/gh/Metelyoff/outbox/svg)](https://jitci.com/gh/Metelyoff/outbox)
