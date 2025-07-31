@@ -1,1 +1,2 @@
-[![](https://jitci.com/gh/Metelyoff/outbox/svg)](https://jitci.com/gh/Metelyoff/outbox)
+### Build Status
+[![](https://jitpack.io/v/Metelyoff/outbox.svg)](https://jitpack.io/#Metelyoff/outbox)
