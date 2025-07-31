@@ -4,5 +4,3 @@ jdk:
 before_install:
   - sdk install java 17.0.1-open
   - sdk use java 17.0.1-open
-script:
-  - ./gradlew clean build --no-daemon publish

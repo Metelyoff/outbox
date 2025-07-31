@@ -1,6 +1,5 @@
 plugins {
-    java
-    id("org.springframework.boot") version "3.5.3"
+    `java-library`
     id("io.spring.dependency-management") version "1.1.7"
     id("maven-publish")
 }
@@ -43,10 +42,6 @@ dependencyManagement {
     imports {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
     }
-}
-
-tasks.bootJar {
-    enabled = false
 }
 
 tasks.jar {
