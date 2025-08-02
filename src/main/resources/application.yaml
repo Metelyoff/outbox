@@ -1,6 +1,18 @@
 spring:
   application:
     name: outbox
+    outbox:
+      flyway:
+        enabled: true
+        url: ${spring.datasource.url}
+        user: ${DEBEZIUM_POSTGRES_USER}
+        password: ${DEBEZIUM_POSTGRES_PASSWORD}
+        locations: classpath:migrations
+        baseline-on-migrate: true
+        default-schema: public
+        fail-on-missing-locations: true
+        placeholders:
+          debezium_user: ${DEBEZIUM_POSTGRES_USER}
   main:
     allow-bean-definition-overriding: true
   cloud:
@@ -13,14 +25,6 @@ spring:
           destination: ${DEBEZIUM_DESTINATION}
           group: 1
           content-type: application/json
-  flyway:
-    enabled: true
-    locations: classpath:migrations
-    baseline-on-migrate: true
-    default-schema: public
-    fail-on-missing-locations: true
-    placeholders:
-      debezium_user: ${DEBEZIUM_POSTGRES_USER}
   kafka:
     listener:
       ack-mode: manual

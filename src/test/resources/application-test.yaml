@@ -3,6 +3,11 @@ spring:
     outbox:
       listener:
         topics: topic-1,topic-2
+      flyway:
+        user: test
+        password: test
+        placeholders:
+          debezium_user: test
   jpa:
     show-sql: true
     hibernate:
@@ -22,6 +27,3 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: test-group
-  flyway:
-    placeholders:
-      debezium_user: test
