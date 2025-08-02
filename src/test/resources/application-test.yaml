@@ -22,3 +22,6 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: test-group
+  flyway:
+    placeholders:
+      debezium_user: test

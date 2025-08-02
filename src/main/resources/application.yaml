@@ -13,6 +13,14 @@ spring:
           destination: ${DEBEZIUM_DESTINATION}
           group: 1
           content-type: application/json
+  flyway:
+    enabled: true
+    locations: classpath:migrations
+    baseline-on-migrate: true
+    default-schema: public
+    fail-on-missing-locations: true
+    placeholders:
+      debezium_user: ${DEBEZIUM_POSTGRES_USER}
   kafka:
     listener:
       ack-mode: manual
