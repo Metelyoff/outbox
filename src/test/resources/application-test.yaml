@@ -3,11 +3,6 @@ spring:
     outbox:
       listener:
         topics: topic-1,topic-2
-      flyway:
-        user: test
-        password: test
-        placeholders:
-          debezium_user: test
   jpa:
     show-sql: true
     hibernate:
