@@ -12,11 +12,7 @@ spring:
       bindings:
         debeziumEventConsumer-in-0:
           destination: test-destination
-          group: 1
-          content-type: application/json
   kafka:
-    listener:
-      ack-mode: manual
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
