@@ -1,30 +1,29 @@
 package com.ecommerce.outbox.listeners;
 
-import com.ecommerce.outbox.core.EventListener;
+import com.ecommerce.outbox.core.AcknowledgmentEventListener;
 import com.ecommerce.outbox.core.OutboxEventHandler;
 import com.ecommerce.outbox.core.OutboxEventHandlerFactory;
 import com.ecommerce.outbox.events.OutboxEvent;
 import com.ecommerce.outbox.repositories.OutboxEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-@Primary
 @Service
-public class DefaultOutboxEventListener implements EventListener<OutboxEvent> {
+public class AcknowledgmentOutboxEventListener implements AcknowledgmentEventListener<OutboxEvent> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultOutboxEventListener.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AcknowledgmentOutboxEventListener.class);
 
     private final OutboxEventHandlerFactory outboxEventHandlerFactory;
     private final OutboxEventRepository outboxEventRepository;
 
-    public DefaultOutboxEventListener(
+    public AcknowledgmentOutboxEventListener(
             final OutboxEventHandlerFactory outboxEventHandlerFactory,
             final OutboxEventRepository outboxEventRepository
     ) {
@@ -42,7 +41,7 @@ public class DefaultOutboxEventListener implements EventListener<OutboxEvent> {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     @Override
-    public void onEvent(OutboxEvent event) {
+    public void onEvent(OutboxEvent event, Acknowledgment acknowledgment) {
         LOG.info("Received message: {}", event);
         try {
             if (outboxEventRepository.existsById(UUID.fromString(event.id()))) {
@@ -51,6 +50,7 @@ public class DefaultOutboxEventListener implements EventListener<OutboxEvent> {
             }
             OutboxEventHandler handler = outboxEventHandlerFactory.getHandler(event);
             handler.handleEvent(event);
+            acknowledgment.acknowledge();
             LOG.info("Event processed: {}", event);
         } catch (Exception e) {
             LOG.error("Error processed message: ", e);

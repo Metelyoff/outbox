@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class DefaultOutboxEventListenerIT extends AbstractIntegrationTest {
+class AcknowledgmentOutboxEventListenerIT extends AbstractIntegrationTest {
 
     @Autowired
     private KafkaTemplate<String, OutboxEvent> kafkaTemplate;
